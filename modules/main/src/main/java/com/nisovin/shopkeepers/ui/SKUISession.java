@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.ui;
 
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -84,11 +85,11 @@ public final class SKUISession implements UISession {
 
 	@Override
 	public void closeDelayed() {
-		this.closeDelayedAndRunTask(null);
+//		this.closeDelayedAndRunTask(null, );
 	}
 
 	@Override
-	public void closeDelayedAndRunTask(@Nullable Runnable task) {
+	public void closeDelayedAndRunTask(@Nullable Runnable task, SchedulerContext context) {
 		if (!this.isValid()) return;
 
 		this.deactivateUI();
@@ -99,7 +100,7 @@ public final class SKUISession implements UISession {
 			if (task != null) {
 				task.run();
 			}
-		});
+		}, context);
 	}
 
 	@Override
@@ -124,7 +125,7 @@ public final class SKUISession implements UISession {
 			if (task != null) {
 				task.run();
 			}
-		});
+		}, SchedulerContext.of(player));
 	}
 
 	/**

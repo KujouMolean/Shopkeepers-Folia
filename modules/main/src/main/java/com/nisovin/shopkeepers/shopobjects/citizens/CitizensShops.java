@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -180,7 +182,7 @@ public class CitizensShops {
 		citizensListener.onEnable();
 
 		// Delayed to run after shopkeepers and NPCs were loaded:
-		Bukkit.getScheduler().runTaskLater(plugin, new DelayedSetupTask(), 3L);
+		Folia.getScheduler().runTaskLaterGlobally(plugin ,new DelayedSetupTask(), 3L);
 
 		// Enabled:
 		citizensShopsEnabled = true;
@@ -196,7 +198,8 @@ public class CitizensShops {
 
 			// Inform the Citizens NPC shop objects:
 			shopkeepersByNpcId.values().stream().flatMap(List::stream).forEach(shopkeeper -> {
-				((SKCitizensShopObject) shopkeeper.getShopObject()).onCitizensShopsEnabled();
+				SchedulerContext context = shopkeeper.getLocation() != null ? SchedulerContext.of(shopkeeper.getLocation()) : SchedulerContext.ofAsync();
+				context.runTask(plugin, () -> ((SKCitizensShopObject) shopkeeper.getShopObject()).onCitizensShopsEnabled());
 			});
 		}
 	}

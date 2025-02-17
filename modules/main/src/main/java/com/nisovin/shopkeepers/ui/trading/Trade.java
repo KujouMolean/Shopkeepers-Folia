@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.ui.trading;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -256,7 +257,7 @@ public final class Trade {
 	public ShopkeeperTradeEvent callTradeEvent() {
 		tradeEventCalled = true;
 
-		Bukkit.getPluginManager().callEvent(tradeEvent);
+		Folia.getPluginManager().callEvent(tradeEvent);
 		return tradeEvent;
 	}
 

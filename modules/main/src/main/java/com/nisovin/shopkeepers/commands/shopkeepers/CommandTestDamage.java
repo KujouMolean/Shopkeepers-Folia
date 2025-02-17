@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.commands.shopkeepers;
 
+import com.molean.folia.adapter.FoliaRunnable;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -86,7 +87,7 @@ class CommandTestDamage extends PlayerCommand {
 				+ "&a, Per tick: &e" + timesPerTick + "&a, Duration &e" + durationTicks
 				+ " ticks &a..."));
 
-		new BukkitRunnable() {
+		new FoliaRunnable() {
 
 			private int tickCounter = 0;
 
@@ -126,6 +127,6 @@ class CommandTestDamage extends PlayerCommand {
 							+ ChatColor.GRAY + ")");
 				}
 			}
-		}.runTaskTimer(plugin, 1L, 1L);
+		}.runTaskTimer(plugin, player, 1L, 1L);
 	}
 }

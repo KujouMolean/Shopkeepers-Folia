@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.event;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -29,7 +30,7 @@ public class ShopkeeperEventHelper {
 		Validate.notNull(shopkeeper, "shopkeeper is null");
 		Validate.notNull(player, "player is null");
 		PlayerDeleteShopkeeperEvent event = new PlayerDeleteShopkeeperEvent(shopkeeper, player);
-		Bukkit.getPluginManager().callEvent(event);
+		Folia.getPluginManager().callEvent(event);
 		if (event.isCancelled()) {
 			Log.debug(() -> shopkeeper.getLogPrefix() + "PlayerDeleteShopkeeperEvent for player '"
 					+ player.getName() + "' was cancelled.");

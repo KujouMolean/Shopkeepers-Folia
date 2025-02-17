@@ -3,6 +3,7 @@ package com.nisovin.shopkeepers.util.inventory;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -637,14 +638,14 @@ public final class InventoryUtils {
 
 	public static void updateInventoryLater(Player player) {
 		Validate.notNull(player, "player is null");
-		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), player::updateInventory);
+		Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(), player, player::updateInventory);
 	}
 
 	// Only closes the player's open inventory view if it is still the specified view after the
 	// delay:
 	public static void closeInventoryDelayed(InventoryView inventoryView) {
 		Validate.notNull(inventoryView, "inventoryView is null");
-		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+		Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(), inventoryView.getPlayer(), () -> {
 			InventoryView openInventoryView = inventoryView.getPlayer().getOpenInventory();
 			if (inventoryView == openInventoryView) {
 				inventoryView.close(); // Same as player.closeInventory()
@@ -653,7 +654,7 @@ public final class InventoryUtils {
 	}
 
 	public static void closeInventoryDelayed(Player player) {
-		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), player::closeInventory);
+		Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(), player, () -> player.closeInventory());
 	}
 
 	// This can for example be used during the handling of inventory interaction events.
@@ -663,9 +664,7 @@ public final class InventoryUtils {
 			@ReadOnly @Nullable ItemStack itemStack
 	) {
 		Validate.notNull(inventory, "inventory is null");
-		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
-			inventory.setItem(slot, itemStack); // This copies the item internally
-		});
+		inventory.setItem(slot, itemStack);
 	}
 
 	// TODO Replace this with the corresponding Bukkit API method added in late 1.15.2. See

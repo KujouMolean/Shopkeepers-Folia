@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -326,7 +327,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		shopkeeper.informAdded(cause);
 
 		// Call event:
-		Bukkit.getPluginManager().callEvent(new ShopkeeperAddedEvent(shopkeeper, cause));
+		Folia.getPluginManager().callEvent(new ShopkeeperAddedEvent(shopkeeper, cause));
 		if (!shopkeeper.isValid()) {
 			// The shopkeeper has already been removed again.
 			return;
@@ -343,7 +344,7 @@ public class SKShopkeeperRegistry implements ShopkeeperRegistry {
 		assert shopkeeper != null && shopkeeper.isValid() && cause != null;
 
 		// Call event:
-		Bukkit.getPluginManager().callEvent(new ShopkeeperRemoveEvent(shopkeeper, cause));
+		Folia.getPluginManager().callEvent(new ShopkeeperRemoveEvent(shopkeeper, cause));
 
 		if (!shopkeeper.isValid()) {
 			Log.warning(shopkeeper.getLogPrefix()

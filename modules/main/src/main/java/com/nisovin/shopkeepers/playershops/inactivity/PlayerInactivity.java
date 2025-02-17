@@ -1,5 +1,7 @@
 package com.nisovin.shopkeepers.playershops.inactivity;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -54,7 +56,7 @@ public class PlayerInactivity {
 		private static final long INTERVAL_TICKS = Ticks.PER_SECOND * 60 * 60 * 4L;
 
 		private final Plugin plugin;
-		private @Nullable BukkitTask task = null;
+		private @Nullable ScheduledTask task = null;
 
 		public DeleteInactivePlayerShopsTask(Plugin plugin) {
 			Validate.notNull(plugin, "plugin is null");
@@ -65,7 +67,7 @@ public class PlayerInactivity {
 			this.stop(); // Stop the task if it is already running
 
 			// The task runs once shortly after start, and then periodically in large intervals:
-			task = Bukkit.getScheduler().runTaskTimer(plugin, this, 5L, INTERVAL_TICKS);
+			task = Folia.getScheduler().runTaskTimerAsynchronously(plugin, this, 5L, INTERVAL_TICKS);
 		}
 
 		public void stop() {

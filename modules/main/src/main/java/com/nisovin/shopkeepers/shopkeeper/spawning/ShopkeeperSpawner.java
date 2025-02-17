@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -692,12 +694,14 @@ public class ShopkeeperSpawner {
 		chunks.forEach(chunkCoords -> {
 			if (!shopkeeperRegistry.isChunkActive(chunkCoords)) return;
 
-			Collection<? extends AbstractShopkeeper> chunkShopkeepers = shopkeeperRegistry.getShopkeepersInChunk(chunkCoords);
-			chunkShopkeepers.forEach(shopkeeper -> {
-				if (!shopkeeperFilter.test(shopkeeper)) return;
+			Folia.runSync(() -> {
+				Collection<? extends AbstractShopkeeper> chunkShopkeepers = shopkeeperRegistry.getShopkeepersInChunk(chunkCoords);
+				chunkShopkeepers.forEach(shopkeeper -> {
+					if (!shopkeeperFilter.test(shopkeeper)) return;
 
-				this.updateSpawnState(shopkeeper, State.SPAWNING);
-			});
+					this.updateSpawnState(shopkeeper, State.SPAWNING);
+				});
+			}, new Location(chunkCoords.getWorld(), chunkCoords.getChunkX() << 4, 0, chunkCoords.getChunkZ() << 4));
 		});
 
 		// We only spawn the shopkeepers that are still marked as 'spawning' once we process them:
@@ -713,12 +717,14 @@ public class ShopkeeperSpawner {
 			// removed, the previously set spawn states of the shopkeepers have already been reset
 			// again. Any shopkeepers that have been newly added to the chunk in the meantime are
 			// ignored in the following, since their spawn states will not be 'spawning'.
-			this.spawnChunkShopkeepers(
-					chunkCoords,
-					spawnReason,
-					newShopkeeperFilter,
-					spawnImmediately
-			);
+			Folia.runSync(() -> {
+				this.spawnChunkShopkeepers(
+						chunkCoords,
+						spawnReason,
+						newShopkeeperFilter,
+						spawnImmediately
+				);
+			}, new Location(chunkCoords.getWorld(), chunkCoords.getChunkX() << 4, 0, chunkCoords.getChunkZ() << 4));
 		});
 	}
 

@@ -1,6 +1,7 @@
 package com.nisovin.shopkeepers.world;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,6 +15,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
 import com.nisovin.shopkeepers.util.logging.Log;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Tries to force an entity teleport, bypassing all other plugins (including this plugin).
@@ -71,18 +73,16 @@ public class ForcingEntityTeleporter implements Listener {
 	/**
 	 * Teleports the given entity to the given location, trying to bypass any plugins that cancel or
 	 * modify any corresponding {@link EntityTeleportEvent}.
-	 * 
-	 * @param entity
-	 *            the entity to teleport
-	 * @param toLocation
-	 *            the destination location
+	 *
+	 * @param entity     the entity to teleport
+	 * @param toLocation the destination location
 	 * @return the result of the teleport
 	 */
-	public boolean teleport(Entity entity, Location toLocation) {
+	public @NotNull CompletableFuture<Boolean> teleport(Entity entity, Location toLocation) {
 		this.nextTeleportEntityUuid = entity.getUniqueId();
 		this.toLocation = toLocation;
 
-		boolean result = entity.teleport(toLocation);
+		@NotNull CompletableFuture<Boolean> result = entity.teleportAsync(toLocation);
 
 		// This reset is required if the teleport did not actually trigger an event (e.g. on Spigot
 		// instead of Paper servers):

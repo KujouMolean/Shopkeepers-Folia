@@ -2,9 +2,11 @@ package com.nisovin.shopkeepers.util.bukkit;
 
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.api.internal.util.Unsafe;
@@ -66,7 +68,7 @@ public abstract class SingletonTask {
 
 	private State state = State.NOT_RUNNING;
 	// The Bukkit task asynchronously executing this task. Only relevant for async executions.
-	private @Nullable BukkitTask asyncTask = null;
+	private @Nullable ScheduledTask asyncTask = null;
 	// The (internal) callbacks of the current execution:
 	// Run immediately, possibly asynchronously:
 	private @Nullable Runnable internalCallback = null;
@@ -173,12 +175,12 @@ public abstract class SingletonTask {
 	 * This method cannot be called from within an execution, i.e. from within {@link #prepare()},
 	 * {@link #execute()}, or {@link #syncCallback()}.
 	 */
-	public final void run() {
+	public final void run(SchedulerContext context) {
 		if (plugin.isEnabled()) {
-			this.runTask(true);
+			this.runTask(true, context);
 		} else {
 			// During plugin disable, all executions take place immediately:
-			this.runTask(false);
+			this.runTask(false, context);
 		}
 	}
 
@@ -192,8 +194,8 @@ public abstract class SingletonTask {
 	 * This method cannot be called from within an execution, i.e. from within {@link #prepare()},
 	 * {@link #execute()}, or {@link #syncCallback()}.
 	 */
-	public final void runImmediately() {
-		this.runTask(false);
+	public final void runImmediately(SchedulerContext context) {
+		this.runTask(false,context );
 	}
 
 	/**
@@ -284,7 +286,7 @@ public abstract class SingletonTask {
 		// any state related to them has been reset.
 	}
 
-	private void runTask(boolean async) {
+	private void runTask(boolean async, SchedulerContext context) {
 		this.validateMainThreadAndNotWithinExecution();
 		// During plugin disable, only synchronous executions are allowed, because the Bukkit
 		// Scheduler does no longer accept new tasks. This has to be ensured by the caller (i.e.
@@ -337,7 +339,7 @@ public abstract class SingletonTask {
 			// immediately.
 			SchedulerUtils.runOnMainThreadOrOmit(
 					plugin,
-					Unsafe.assertNonNull(internalSyncCallback)
+					Unsafe.assertNonNull(internalSyncCallback),context
 			);
 		};
 
@@ -346,7 +348,7 @@ public abstract class SingletonTask {
 		// this execution.
 		// Note: This needs to be a new runnable (cannot be a lambda), in order to be able to
 		// reliable use the object's identity to identify whether the callback has already been run.
-		internalSyncCallback = this.createInternalSyncCallbackTask();
+		internalSyncCallback = this.createInternalSyncCallbackTask(context);
 
 		preparationEndTimeNanos = System.nanoTime();
 		preparationDurationMillis = TimeUnit.NANOSECONDS.toMillis(
@@ -377,13 +379,13 @@ public abstract class SingletonTask {
 	 */
 	public abstract class InternalAsyncTask implements Runnable {
 
-		private @Nullable BukkitTask task; // Captured Bukkit task
+		private @Nullable ScheduledTask task; // Captured Bukkit task
 
 		protected InternalAsyncTask() {
 		}
 
-		private BukkitTask runTaskAsynchronously() {
-			this.task = Bukkit.getScheduler().runTaskAsynchronously(plugin, this);
+		private ScheduledTask runTaskAsynchronously() {
+			this.task = Folia.getScheduler().runTaskAsynchronously(plugin, this);
 			return task;
 		}
 
@@ -407,6 +409,13 @@ public abstract class SingletonTask {
 	 * by subclasses.
 	 */
 	public class InternalSyncCallbackTask implements Runnable {
+
+		private SchedulerContext context;
+
+		public InternalSyncCallbackTask(SchedulerContext context) {
+			this.context = context;
+		}
+
 		@Override
 		public final void run() {
 			// We omit running this callback if it has already been run (for example when awaiting
@@ -440,9 +449,9 @@ public abstract class SingletonTask {
 			if (runAgain) {
 				runAgain = false;
 				if (runAgainSync) {
-					SingletonTask.this.runImmediately();
+					SingletonTask.this.runImmediately(context);
 				} else {
-					SingletonTask.this.run();
+					SingletonTask.this.run(context);
 				}
 			}
 			assert !runAgain;
@@ -454,13 +463,13 @@ public abstract class SingletonTask {
 	 * 
 	 * @return the task instance, not <code>null</code>
 	 */
-	protected abstract InternalSyncCallbackTask createInternalSyncCallbackTask();
+	protected abstract InternalSyncCallbackTask createInternalSyncCallbackTask(SchedulerContext context);
 
 	// Potentially run asynchronously.
 	// asyncTask: The async task executing this method. Null for sync executions.
 	// If the async task got cancelled and another execution has already been started, this may not
 	// match the current value of this class' asyncTask variable.
-	private void executeTask(@Nullable BukkitTask asyncTask) {
+	private void executeTask(@Nullable ScheduledTask asyncTask) {
 		if (asyncTask != null) {
 			// Asynchronous execution:
 			// Requires the lock for coordination with the main thread, and might have been

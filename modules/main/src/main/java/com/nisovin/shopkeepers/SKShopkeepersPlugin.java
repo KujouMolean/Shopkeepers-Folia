@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -354,7 +355,7 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		// potentially be interpreted as lag by the server.
 		// Another option is for these plugins to perform their setup during onLoad (similar to how
 		// we register default shop types, etc., during onLoad).
-		Bukkit.getPluginManager().callEvent(new ShopkeepersStartupEvent());
+		Folia.getPluginManager().callEvent(new ShopkeepersStartupEvent());
 
 		forcingCreatureSpawner.onEnable();
 		forcingEntityTeleporter.onEnable();
@@ -537,7 +538,8 @@ public class SKShopkeepersPlugin extends JavaPlugin implements InternalShopkeepe
 		eventDebugger.onDisable();
 
 		HandlerList.unregisterAll(this);
-		Bukkit.getScheduler().cancelTasks(this);
+		Bukkit.getAsyncScheduler().cancelTasks(this);
+		Bukkit.getGlobalRegionScheduler().cancelTasks(this);
 
 		InternalShopkeepersAPI.disable();
 		plugin = null;

@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.shopkeeper.player;
 
 import java.util.List;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -86,7 +87,7 @@ public abstract class AbstractPlayerShopType<T extends AbstractPlayerShopkeeper>
 				shopCreationData,
 				maxShopsLimit
 		);
-		Bukkit.getPluginManager().callEvent(createEvent);
+		Folia.getPluginManager().callEvent(createEvent);
 		if (createEvent.isCancelled()) {
 			Log.debug("PlayerShopkeeperCreateEvent was cancelled!");
 			return false;

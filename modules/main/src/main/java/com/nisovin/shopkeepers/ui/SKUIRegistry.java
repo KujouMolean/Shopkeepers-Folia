@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -159,7 +161,7 @@ public class SKUIRegistry extends AbstractTypeRegistry<AbstractUIType>
 		} else {
 			openUIEvent = new ShopkeeperOpenUIEvent(shopkeeper, uiType, player, silentRequest);
 		}
-		Bukkit.getPluginManager().callEvent(openUIEvent);
+		Folia.getPluginManager().callEvent(openUIEvent);
 		if (openUIEvent.isCancelled()) {
 			Log.debug(() -> "A plugin cancelled the opening of UI '" + uiIdentifier
 					+ "' for player " + playerName + ".");
@@ -327,7 +329,7 @@ public class SKUIRegistry extends AbstractTypeRegistry<AbstractUIType>
 
 		SchedulerUtils.runTaskOrOmit(plugin, () -> {
 			this.abortUISessions(shopkeeper);
-		});
+		}, shopkeeper.getLocation() == null ? SchedulerContext.ofAsync() : SchedulerContext.of(shopkeeper.getLocation()));
 	}
 
 	private void deactivateUIs(Shopkeeper shopkeeper) {

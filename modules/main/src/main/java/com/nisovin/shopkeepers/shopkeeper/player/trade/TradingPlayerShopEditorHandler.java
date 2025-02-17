@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -190,7 +191,7 @@ public class TradingPlayerShopEditorHandler extends PlayerShopEditorHandler {
 		cursorClone.setAmount(1);
 		// Replace placeholder item, if this is one:
 		ItemStack cursorFinal = PlaceholderItems.replace(cursorClone);
-		Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+		Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(),view.getPlayer(), () -> {
 			if (view.getPlayer().getOpenInventory() != view) return;
 
 			Inventory inventory = view.getTopInventory();

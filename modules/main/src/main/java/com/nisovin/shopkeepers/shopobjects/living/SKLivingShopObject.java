@@ -4,13 +4,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.bukkit.Bukkit;
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.Breedable;
@@ -69,6 +72,7 @@ import com.nisovin.shopkeepers.util.inventory.PotionUtils;
 import com.nisovin.shopkeepers.util.java.CyclicCounter;
 import com.nisovin.shopkeepers.util.java.RateLimiter;
 import com.nisovin.shopkeepers.util.logging.Log;
+import org.jetbrains.annotations.NotNull;
 
 public class SKLivingShopObject<E extends LivingEntity>
 		extends AbstractEntityShopObject implements LivingShopObject {
@@ -316,7 +320,10 @@ public class SKLivingShopObject<E extends LivingEntity>
 
 		// Remove the entity (if it hasn't been removed already):
 		if (!entity.isDead()) {
-			entity.remove();
+			entity.setPersistent(false);
+			if (!Bukkit.getServer().isStopping()) {
+				entity.remove();
+			}
 		}
 
 		this.entity = null;
@@ -343,6 +350,7 @@ public class SKLivingShopObject<E extends LivingEntity>
 		// Note: We expect this type of entity to be spawnable, and not result in an
 		// IllegalArgumentException.
 		this.entity = (E) world.spawn(spawnLocation, entityClass, entity -> {
+			entity.setPersistent(false);
 			assert entity != null;
 			// Note: This callback is run after the entity has been prepared (this includes the
 			// creation of random equipment and the random spawning of passengers) and right before
@@ -565,15 +573,15 @@ public class SKLivingShopObject<E extends LivingEntity>
 	}
 
 	@Override
-	public boolean move() {
+	public @NotNull CompletableFuture<Boolean> move() {
 		Entity entity = this.entity;
-		if (entity == null) return false; // Ignore if not spawned
+		if (entity == null) return CompletableFuture.completedFuture(false); // Ignore if not spawned
 
 		Location spawnLocation = this.getSpawnLocation();
-		if (spawnLocation == null) return false;
+		if (spawnLocation == null) return CompletableFuture.completedFuture(false);
 
 		this.lastSpawnLocation = spawnLocation;
-		boolean teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter().teleport(entity, spawnLocation);
+		@NotNull CompletableFuture<Boolean> teleportSuccess = SKShopkeepersPlugin.getInstance().getForcingEntityTeleporter().teleport(entity, spawnLocation);
 
 		// Inform the AI system:
 		livingShops.getLivingEntityAI().updateLocation(this);
@@ -1009,7 +1017,7 @@ public class SKLivingShopObject<E extends LivingEntity>
 			) {
 				editorSession.getUISession().closeDelayedAndRunTask(() -> {
 					openEquipmentEditor(editorSession.getPlayer(), false);
-				});
+				}, SchedulerContext.of(editorSession.getPlayer()));
 				return true;
 			}
 
@@ -1033,7 +1041,7 @@ public class SKLivingShopObject<E extends LivingEntity>
 
 					// Call shopkeeper edited event:
 					Shopkeeper shopkeeper = this.getShopkeeper();
-					Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
+					Folia.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
 					// Save:
 					shopkeeper.save();

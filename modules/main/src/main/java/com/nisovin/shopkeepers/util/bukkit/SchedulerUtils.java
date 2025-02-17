@@ -3,6 +3,9 @@ package com.nisovin.shopkeepers.util.bukkit;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
@@ -18,6 +21,9 @@ import com.nisovin.shopkeepers.util.java.Validate;
 public final class SchedulerUtils {
 
 	public static int getActiveAsyncTasks(Plugin plugin) {
+		if (true) {
+			return 0;
+		}
 		Validate.notNull(plugin, "plugin is null");
 		int workers = 0;
 		for (BukkitWorker worker : Bukkit.getScheduler().getActiveWorkers()) {
@@ -48,38 +54,37 @@ public final class SchedulerUtils {
 	 * If the current thread is already the primary thread, the task will be run immediately.
 	 * Otherwise, it attempts to schedule the task to run on the server's primary thread. However,
 	 * if the plugin is disabled, the task won't be scheduled.
-	 * 
-	 * @param plugin
-	 *            the plugin to use for scheduling, not <code>null</code>
-	 * @param task
-	 *            the task, not <code>null</code>
+	 *
+	 * @param plugin  the plugin to use for scheduling, not <code>null</code>
+	 * @param task    the task, not <code>null</code>
+	 * @param context
 	 * @return <code>true</code> if the task was run or successfully scheduled to be run,
-	 *         <code>false</code> otherwise
+	 * <code>false</code> otherwise
 	 */
-	public static boolean runOnMainThreadOrOmit(Plugin plugin, Runnable task) {
+	public static boolean runOnMainThreadOrOmit(Plugin plugin, Runnable task, SchedulerContext context) {
 		validatePluginTask(plugin, task);
 		if (isMainThread()) {
 			task.run();
 			return true;
 		} else {
-			return (runTaskOrOmit(plugin, task) != null);
+			return (runTaskOrOmit(plugin, task, context) != null);
 		}
 	}
 
-	public static @Nullable BukkitTask runTaskOrOmit(Plugin plugin, Runnable task) {
-		return runTaskLaterOrOmit(plugin, task, 0L);
+	public static @Nullable BukkitTask runTaskOrOmit(Plugin plugin, Runnable task, SchedulerContext context) {
+		return runTaskLaterOrOmit(plugin, task, 0L,context );
 	}
 
 	public static @Nullable BukkitTask runTaskLaterOrOmit(
 			Plugin plugin,
 			Runnable task,
-			long delay
-	) {
+			long delay,
+			SchedulerContext context) {
 		validatePluginTask(plugin, task);
 		// Tasks can only be registered while enabled:
 		if (plugin.isEnabled()) {
 			try {
-				return Bukkit.getScheduler().runTaskLater(plugin, task, delay);
+				context.runTaskLater(plugin, task, (int) delay);
 			} catch (IllegalPluginAccessException e) {
 				// Couldn't register task: The plugin got disabled just now.
 			}
@@ -87,11 +92,11 @@ public final class SchedulerUtils {
 		return null;
 	}
 
-	public static @Nullable BukkitTask runAsyncTaskOrOmit(Plugin plugin, Runnable task) {
+	public static @Nullable ScheduledTask runAsyncTaskOrOmit(Plugin plugin, Runnable task) {
 		return runAsyncTaskLaterOrOmit(plugin, task, 0L);
 	}
 
-	public static @Nullable BukkitTask runAsyncTaskLaterOrOmit(
+	public static @Nullable ScheduledTask runAsyncTaskLaterOrOmit(
 			Plugin plugin,
 			Runnable task,
 			long delay
@@ -100,7 +105,7 @@ public final class SchedulerUtils {
 		// Tasks can only be registered while enabled:
 		if (plugin.isEnabled()) {
 			try {
-				return Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, task, delay);
+				return Folia.getScheduler().runTaskLaterAsync(plugin, task, delay);
 			} catch (IllegalPluginAccessException e) {
 				// Couldn't register task: The plugin got disabled just now.
 			}

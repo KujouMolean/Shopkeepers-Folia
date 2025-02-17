@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.util.interaction;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -61,7 +62,7 @@ public final class InteractionUtils {
 				block,
 				BlockFace.UP
 		);
-		Bukkit.getPluginManager().callEvent(dummyInteractEvent);
+		Folia.getPluginManager().callEvent(dummyInteractEvent);
 		boolean canAccessBlock = (dummyInteractEvent.useInteractedBlock() != Result.DENY);
 
 		// Reset the block type again (without physics):
@@ -107,7 +108,7 @@ public final class InteractionUtils {
 				player,
 				entity
 		);
-		Bukkit.getPluginManager().callEvent(dummyInteractEvent);
+		Folia.getPluginManager().callEvent(dummyInteractEvent);
 		boolean canAccessEntity = !dummyInteractEvent.isCancelled();
 
 		// Resetting items in main and off hand:

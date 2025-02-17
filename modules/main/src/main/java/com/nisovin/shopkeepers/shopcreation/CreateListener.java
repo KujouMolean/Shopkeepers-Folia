@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -320,7 +321,7 @@ class CreateListener implements Listener {
 
 					// Manually remove creation item from player's hand after this event is
 					// processed:
-					Bukkit.getScheduler().runTask(plugin, () -> {
+					Folia.getScheduler().runTask(plugin, player, () -> {
 						ItemStack newItemInMainHand = ItemUtils.decreaseItemAmount(itemInHand, 1);
 						player.getInventory().setItemInMainHand(newItemInMainHand);
 					});

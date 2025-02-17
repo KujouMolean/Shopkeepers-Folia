@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -202,7 +204,7 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 		private static final long PERIOD_TICKS = 6000L; // 5 minutes
 
 		void start() {
-			Bukkit.getScheduler().runTaskTimer(plugin, this, PERIOD_TICKS, PERIOD_TICKS);
+			Folia.getScheduler().runTaskTimerGlobally(plugin, this, PERIOD_TICKS, PERIOD_TICKS);
 		}
 
 		@Override
@@ -822,7 +824,7 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 
 		void start() {
 			assert delayedSaveTask == null;
-			delayedSaveTask = SchedulerUtils.runTaskLaterOrOmit(plugin, this, DELAYED_SAVE_TICKS);
+			delayedSaveTask = SchedulerUtils.runTaskLaterOrOmit(plugin, this, DELAYED_SAVE_TICKS, SchedulerContext.ofGlobal());
 		}
 
 		@Override
@@ -858,9 +860,9 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 		}
 
 		if (async) {
-			saveTask.run();
+			saveTask.run(SchedulerContext.ofGlobal());
 		} else {
-			saveTask.runImmediately();
+			saveTask.runImmediately(SchedulerContext.ofGlobal());
 		}
 	}
 
@@ -893,6 +895,9 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 		}
 
 		private class InternalSyncCallbackTask extends SingletonTask.InternalSyncCallbackTask {
+			public InternalSyncCallbackTask(SchedulerContext context) {
+				super(context);
+			}
 		}
 
 		@Override
@@ -901,8 +906,8 @@ public class SKShopkeeperStorage implements ShopkeeperStorage {
 		}
 
 		@Override
-		protected InternalSyncCallbackTask createInternalSyncCallbackTask() {
-			return new InternalSyncCallbackTask();
+		protected InternalSyncCallbackTask createInternalSyncCallbackTask(SchedulerContext context) {
+			return new InternalSyncCallbackTask(context);
 		}
 
 		@Override

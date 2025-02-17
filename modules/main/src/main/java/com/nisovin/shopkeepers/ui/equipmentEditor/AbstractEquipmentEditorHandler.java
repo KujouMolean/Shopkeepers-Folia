@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -205,7 +206,7 @@ public abstract class AbstractEquipmentEditorHandler extends UIHandler {
 
 		if (rightClick) {
 			// Clear the equipment slot:
-			Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+			Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(), view.getPlayer(), () -> {
 				if (view.getPlayer().getOpenInventory() != view) return;
 
 				inventory.setItem(rawSlot, this.toEditorEquipmentItem(equipmentSlot, null));
@@ -218,7 +219,7 @@ public abstract class AbstractEquipmentEditorHandler extends UIHandler {
 		if (leftClick && !ItemUtils.isEmpty(cursorClone)) {
 			assert cursorClone != null;
 			// Place the item from the cursor:
-			Bukkit.getScheduler().runTask(ShopkeepersPlugin.getInstance(), () -> {
+			Folia.getScheduler().runTask(ShopkeepersPlugin.getInstance(), view.getPlayer(), () -> {
 				if (view.getPlayer().getOpenInventory() != view) return;
 
 				cursorClone.setAmount(1);

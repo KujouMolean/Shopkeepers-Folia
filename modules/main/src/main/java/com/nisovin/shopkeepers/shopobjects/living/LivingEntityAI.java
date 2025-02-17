@@ -7,7 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +25,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -180,8 +183,7 @@ public class LivingEntityAI implements Listener {
 	// Index for fast removal: Shop object -> EntityData
 	private final Map<SKLivingShopObject<?>, EntityData> shopObjects = new HashMap<>();
 
-	private @Nullable BukkitTask aiTask = null;
-	private boolean currentlyRunning = false;
+	private @Nullable ScheduledTask aiTask = null;
 
 	// Statistics:
 	private int activeAIChunksCount = 0;
@@ -217,7 +219,6 @@ public class LivingEntityAI implements Listener {
 	}
 
 	public void onDisable() {
-		assert !currentlyRunning;
 		HandlerList.unregisterAll(this); // Unregister listener
 		this.stopTask();
 		chunks.clear();
@@ -229,8 +230,6 @@ public class LivingEntityAI implements Listener {
 
 	public void addShopObject(SKLivingShopObject<?> shopObject) {
 		Validate.notNull(shopObject, "shopObject is null");
-		Validate.State.isTrue(!currentlyRunning,
-				"Cannot add shop objects while the AI task is running!");
 		Validate.isTrue(!shopObjects.containsKey(shopObject), "shopObject is already added");
 
 		// Note: We expect that the shop object is unregistered again when its entity is despawned.
@@ -273,14 +272,11 @@ public class LivingEntityAI implements Listener {
 		if (chunkData.activeGravity) {
 			activeGravityEntityCount++;
 		}
-
 		// Start the AI task, if it isn't already running:
 		this.startTask();
 	}
 
 	public void removeShopObject(SKLivingShopObject<?> shopObject) {
-		Validate.State.isTrue(!currentlyRunning,
-				"Cannot remove entities while the AI task is running!");
 		// Remove shop object:
 		@Nullable EntityData entityData = shopObjects.remove(shopObject);
 		if (entityData == null) return; // Shop object was not added
@@ -371,7 +367,7 @@ public class LivingEntityAI implements Listener {
 
 		// Start AI task:
 		int tickPeriod = Settings.mobBehaviorTickPeriod;
-		aiTask = Bukkit.getScheduler().runTaskTimer(
+		aiTask = Folia.getScheduler().runTaskTimerAsynchronously(
 				plugin,
 				new TickTask(),
 				tickPeriod,
@@ -402,8 +398,6 @@ public class LivingEntityAI implements Listener {
 				return;
 			}
 
-			currentlyRunning = true;
-
 			// Start timings:
 			totalTimings.start();
 			gravityTimings.startPaused();
@@ -422,8 +416,6 @@ public class LivingEntityAI implements Listener {
 			totalTimings.stop();
 			gravityTimings.stop();
 			aiTimings.stop();
-
-			currentlyRunning = false;
 		}
 	}
 
@@ -440,11 +432,19 @@ public class LivingEntityAI implements Listener {
 		activeAIChunksCount = 0;
 		activeGravityChunksCount = 0;
 
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+
 		// Activate chunks around online players:
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			assert player != null;
-			this.activateNearbyChunks(player);
+			CompletableFuture<Void> voidCompletableFuture = new CompletableFuture<>();
+			futures.add(voidCompletableFuture);
+			Folia.runSync(() -> {
+				this.activateNearbyChunks(player);
+				voidCompletableFuture.complete(null);
+			}, player);
 		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
 		activationTimings.stop();
 	}
@@ -484,7 +484,7 @@ public class LivingEntityAI implements Listener {
 
 	private void activateNearbyChunksDelayed(Player player) {
 		if (!player.isOnline()) return; // Player is no longer online
-		Bukkit.getScheduler().runTask(plugin, new ActivateNearbyChunksDelayedTask(player));
+		Folia.getScheduler().runTask(plugin, player, new ActivateNearbyChunksDelayedTask(player));
 	}
 
 	private class ActivateNearbyChunksDelayedTask implements Runnable {
@@ -560,7 +560,17 @@ public class LivingEntityAI implements Listener {
 			return;
 		}
 
-		chunks.values().forEach(this::processEntities);
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+		chunks.values().forEach( chunkData -> {
+			CompletableFuture<Void> voidCompletableFuture = new CompletableFuture<>();
+			futures.add(voidCompletableFuture);
+			Folia.runSync(() -> {
+				processEntities(chunkData);
+				voidCompletableFuture.complete(null);
+			}, new Location(chunkData.chunkCoords.getWorld(), chunkData.chunkCoords.getChunkX() << 4, 0, chunkData.chunkCoords.getChunkZ() << 4));
+		});
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 	}
 
 	private void processEntities(ChunkData chunkData) {

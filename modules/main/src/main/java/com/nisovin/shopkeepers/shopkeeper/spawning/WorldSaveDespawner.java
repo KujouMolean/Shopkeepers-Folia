@@ -2,6 +2,8 @@ package com.nisovin.shopkeepers.shopkeeper.spawning;
 
 import java.util.function.Predicate;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.scheduler.BukkitTask;
@@ -105,7 +107,7 @@ class WorldSaveDespawner {
 	class RespawnShopkeepersAfterWorldSaveTask implements Runnable {
 
 		private final WorldData worldData;
-		private @Nullable BukkitTask task;
+		private @Nullable ScheduledTask task;
 
 		RespawnShopkeepersAfterWorldSaveTask(WorldData worldData) {
 			assert worldData != null;
@@ -114,7 +116,7 @@ class WorldSaveDespawner {
 
 		void start() {
 			assert !worldData.isWorldSaveRespawnPending();
-			this.task = Bukkit.getScheduler().runTask(plugin, this);
+			this.task = Folia.getScheduler().runTaskGlobally(plugin,this);
 			worldData.setWorldSaveRespawnTask(this);
 		}
 

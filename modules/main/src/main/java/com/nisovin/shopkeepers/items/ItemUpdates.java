@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.items;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 
@@ -22,7 +23,7 @@ public class ItemUpdates {
 	 */
 	public static UpdateItemEvent callUpdateItemEvent(UnmodifiableItemStack item) {
 		UpdateItemEvent updateItemEvent = new UpdateItemEvent(item);
-		Bukkit.getPluginManager().callEvent(updateItemEvent);
+		Folia.getPluginManager().callEvent(updateItemEvent);
 		return updateItemEvent;
 	}
 

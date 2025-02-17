@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.FoliaRunnable;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -100,7 +103,7 @@ class DeleteShopsOfInactivePlayersProcedure {
 
 	private void asyncCheckInactivityOfAllShopOwnersAndContinue() {
 		// We retrieve the OfflinePlayers and their 'last played' times asynchronously:
-		new BukkitRunnable() {
+		new FoliaRunnable() {
 			@Override
 			public void run() {
 				// Set up the data for all inactive shop owners, and remove all shop owners that are
@@ -114,7 +117,7 @@ class DeleteShopsOfInactivePlayersProcedure {
 				// disabled or reloaded):
 				if (this.isCancelled()) return;
 
-				SchedulerUtils.runTaskOrOmit(plugin, () -> continueWithInactiveShopOwners());
+				SchedulerUtils.runTaskOrOmit(plugin, () -> continueWithInactiveShopOwners(), SchedulerContext.ofAsync());
 			}
 		}.runTaskAsynchronously(plugin);
 	}
@@ -169,12 +172,14 @@ class DeleteShopsOfInactivePlayersProcedure {
 
 	private void collectShopsOfInactivePlayers() {
 		shopkeeperRegistry.getAllPlayerShopkeepers().forEach(playerShop -> {
-			// If the shop is owned by an inactive player, remember it for removal:
-			User shopOwner = playerShop.getOwnerUser();
-			InactivePlayerData inactivePlayerData = inactivePlayers.get(shopOwner);
-			if (inactivePlayerData != null) {
-				inactivePlayerData.getShopkeepers().add(playerShop);
-			}
+			Folia.runSync(() -> {
+				// If the shop is owned by an inactive player, remember it for removal:
+				User shopOwner = playerShop.getOwnerUser();
+				InactivePlayerData inactivePlayerData = inactivePlayers.get(shopOwner);
+				if (inactivePlayerData != null) {
+					inactivePlayerData.getShopkeepers().add(playerShop);
+				}
+			}, playerShop.getLocation());
 		});
 		// Note: For some inactive shop owners we might no longer find any shopkeepers. Their
 		// entries will then not contain any shopkeepers.
@@ -194,7 +199,7 @@ class DeleteShopsOfInactivePlayersProcedure {
 
 			// Call event:
 			PlayerInactiveEvent event = new PlayerInactiveEvent(user, shopkeepers);
-			Bukkit.getPluginManager().callEvent(event);
+			Folia.getPluginManager().callEvent(event);
 
 			if (event.isCancelled() || shopkeepers.isEmpty()) {
 				Log.debug(() -> "Ignoring inactive player " + TextUtils.getPlayerString(user)
@@ -208,19 +213,21 @@ class DeleteShopsOfInactivePlayersProcedure {
 
 			// Delete the shopkeepers:
 			shopkeepers.forEach(playerShop -> {
-				if (!playerShop.isValid()) {
-					// The shopkeeper has already been removed in the meantime.
-					Log.debug(() -> playerShop.getUniqueIdLogPrefix()
-							+ "Deletion due to inactivity of owner " + playerShop.getOwnerString()
-							+ " (last seen " + inactivePlayerData.getLastSeenDaysAgo()
-							+ " days ago)" + " skipped: The shopkeeper has already been removed.");
-					return;
-				}
+				Folia.runSync(() -> {
+					if (!playerShop.isValid()) {
+						// The shopkeeper has already been removed in the meantime.
+						Log.debug(() -> playerShop.getUniqueIdLogPrefix()
+								+ "Deletion due to inactivity of owner " + playerShop.getOwnerString()
+								+ " (last seen " + inactivePlayerData.getLastSeenDaysAgo()
+								+ " days ago)" + " skipped: The shopkeeper has already been removed.");
+						return;
+					}
 
-				Log.info(playerShop.getUniqueIdLogPrefix() + "Deletion due to inactivity of owner "
-						+ playerShop.getOwnerString() + " (last seen "
-						+ inactivePlayerData.getLastSeenDaysAgo() + " days ago).");
-				playerShop.delete();
+					Log.info(playerShop.getUniqueIdLogPrefix() + "Deletion due to inactivity of owner "
+							+ playerShop.getOwnerString() + " (last seen "
+							+ inactivePlayerData.getLastSeenDaysAgo() + " days ago).");
+					playerShop.delete();
+				}, playerShop.getLocation());
 			});
 		});
 

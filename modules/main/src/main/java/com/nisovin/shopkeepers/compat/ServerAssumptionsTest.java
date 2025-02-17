@@ -197,7 +197,7 @@ public class ServerAssumptionsTest {
 		itemMeta.setEnchantmentGlintOverride(true);
 		itemMeta.addEnchant(Enchantment.UNBREAKING, 1, true);
 		itemMeta.addEnchant(Enchantment.SHARPNESS, 2, true);
-		itemMeta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED,
+		itemMeta.addAttributeModifier(Attribute.ATTACK_SPEED,
 				new AttributeModifier(
 						new UUID(1L, 1L),
 						"attack speed bonus",
@@ -206,7 +206,7 @@ public class ServerAssumptionsTest {
 						EquipmentSlotGroup.HAND
 				)
 		);
-		itemMeta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED,
+		itemMeta.addAttributeModifier(Attribute.ATTACK_SPEED,
 				new AttributeModifier(
 						new UUID(2L, 2L),
 						"attack speed bonus 2",
@@ -215,7 +215,7 @@ public class ServerAssumptionsTest {
 						EquipmentSlotGroup.OFFHAND
 				)
 		);
-		itemMeta.addAttributeModifier(Attribute.GENERIC_MAX_HEALTH,
+		itemMeta.addAttributeModifier(Attribute.MAX_HEALTH,
 				new AttributeModifier(
 						new UUID(3L, 3L),
 						"max health bonus",

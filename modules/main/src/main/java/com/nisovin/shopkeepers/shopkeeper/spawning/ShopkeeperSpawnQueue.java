@@ -2,6 +2,9 @@ package com.nisovin.shopkeepers.shopkeeper.spawning;
 
 import java.util.function.Consumer;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
+import com.nisovin.shopkeepers.api.ShopkeepersAPI;
 import org.bukkit.plugin.Plugin;
 
 import com.nisovin.shopkeepers.shopkeeper.AbstractShopkeeper;
@@ -91,10 +94,13 @@ public class ShopkeeperSpawnQueue extends TaskQueue<AbstractShopkeeper> {
 
 	@Override
 	protected void process(AbstractShopkeeper shopkeeper) {
-		// Reset the shopkeeper's 'queued' state:
-		this.resetQueued(shopkeeper);
+		SchedulerContext context = shopkeeper.getLocation() != null ? SchedulerContext.of(shopkeeper.getLocation()) : SchedulerContext.ofAsync();
+		context.runTask(ShopkeepersAPI.getPlugin(), () -> {
+			// Reset the shopkeeper's 'queued' state:
+			this.resetQueued(shopkeeper);
 
-		// Spawn the shopkeeper:
-		spawner.accept(shopkeeper);
+			// Spawn the shopkeeper:
+			spawner.accept(shopkeeper);
+		});
 	}
 }

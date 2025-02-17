@@ -3,10 +3,11 @@ package com.nisovin.shopkeepers.util.taskqueue;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import org.bukkit.Bukkit;
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.SchedulerContext;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -69,17 +70,14 @@ public abstract class TaskQueue<@NonNull T> implements TaskQueueStatistics {
 	private final int workUnitsPerExecution;
 	private final Queue<@NonNull T> pending = new ArrayDeque<>();
 	private int maxPending = 0;
-	private @Nullable BukkitTask task = null;
+	private @Nullable ScheduledTask task = null;
 
 	/**
 	 * Creates a new {@link TaskQueue}.
-	 * 
-	 * @param plugin
-	 *            the plugin, not <code>null</code>
-	 * @param taskPeriodTicks
-	 *            the period ticks of the task processing work units
-	 * @param workUnitsPerExecution
-	 *            the number of work units that are processed per task execution
+	 *
+	 * @param plugin                the plugin, not <code>null</code>
+	 * @param taskPeriodTicks       the period ticks of the task processing work units
+	 * @param workUnitsPerExecution the number of work units that are processed per task execution
 	 */
 	public TaskQueue(Plugin plugin, int taskPeriodTicks, int workUnitsPerExecution) {
 		Validate.notNull(plugin, "plugin is null");
@@ -188,7 +186,7 @@ public abstract class TaskQueue<@NonNull T> implements TaskQueueStatistics {
 		}
 
 		// Start new task:
-		task = Bukkit.getScheduler().runTaskTimer(plugin, this.createTask(), 1, taskPeriodTicks);
+		task = Folia.getScheduler().runTaskTimerAsynchronously(plugin, this.createTask(), 1, taskPeriodTicks);
 	}
 
 	private void stopTask() {

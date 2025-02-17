@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -76,7 +77,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		if (setupCompleted) return;
 		if (setupTask.isRunning()) return;
 
-		setupTask.run();
+		setupTask.run(SchedulerContext.ofGlobal());
 	}
 
 	/**
@@ -114,6 +115,9 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		}
 
 		private class InternalSyncCallbackTask extends SingletonTask.InternalSyncCallbackTask {
+			public InternalSyncCallbackTask(SchedulerContext context) {
+				super(context);
+			}
 		}
 
 		@Override
@@ -122,8 +126,8 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		}
 
 		@Override
-		protected InternalSyncCallbackTask createInternalSyncCallbackTask() {
-			return new InternalSyncCallbackTask();
+		protected InternalSyncCallbackTask createInternalSyncCallbackTask(SchedulerContext context) {
+			return new InternalSyncCallbackTask(context);
 		}
 
 		@Override
@@ -205,7 +209,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		delayedSaveTask = SchedulerUtils.runTaskLaterOrOmit(
 				plugin,
 				new DelayedSaveTask(),
-				DELAYED_SAVE_TICKS
+				DELAYED_SAVE_TICKS, SchedulerContext.ofAsync()
 		);
 	}
 
@@ -231,7 +235,7 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 			return;
 		}
 
-		saveTask.run(); // Usually async, but may be sync during plugin disable
+		saveTask.run(SchedulerContext.ofAsync()); // Usually async, but may be sync during plugin disable
 	}
 
 	private class SaveTask extends SingletonTask {
@@ -249,6 +253,9 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		}
 
 		private class InternalSyncCallbackTask extends SingletonTask.InternalSyncCallbackTask {
+			public InternalSyncCallbackTask(SchedulerContext context) {
+				super(context);
+			}
 		}
 
 		@Override
@@ -257,8 +264,8 @@ public abstract class AbstractSingleWriterTradeLogger implements TradeLogger {
 		}
 
 		@Override
-		protected InternalSyncCallbackTask createInternalSyncCallbackTask() {
-			return new InternalSyncCallbackTask();
+		protected InternalSyncCallbackTask createInternalSyncCallbackTask(SchedulerContext context) {
+			return new InternalSyncCallbackTask(context);
 		}
 
 		@Override

@@ -24,6 +24,7 @@ dependencies {
 	// Bukkit, because the Spigot repository does not contain Bukkit for certain versions. And we
 	// also run into issues when we try to build Bukkit/Spigot as part of the Jitpack build.
 	compileOnly libs.spigot.api
+	compileOnly "com.molean:FoliaAdapter:1.0-SNAPSHOT:dev"
 	// For some reason, this needs to use the 'api' configuration in order for Eclipse to properly
 	// resolve our own JDK EEAs. compileOnly and compileOnlyApi are not sufficient, neither here nor
 	// in the dependent projects.

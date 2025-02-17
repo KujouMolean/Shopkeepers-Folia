@@ -3,6 +3,8 @@ package com.nisovin.shopkeepers.shopobjects.living.types.villager;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -66,7 +68,7 @@ public class VillagerSounds extends TradingListener {
 	private final LivingShopObject shopObject;
 
 	private long lastSoundNanos = System.nanoTime();
-	private @Nullable BukkitTask tradeInteractionTask = null;
+	private @Nullable ScheduledTask tradeInteractionTask = null;
 
 	public VillagerSounds(SKLivingShopObject<? extends AbstractVillager> shopObject) {
 		Validate.notNull(shopObject, "shopObject is null");
@@ -232,8 +234,8 @@ public class VillagerSounds extends TradingListener {
 			// We are already about to process another inventory interaction.
 			return;
 		}
-		tradeInteractionTask = Bukkit.getScheduler().runTask(
-				SKShopkeepersPlugin.getInstance(),
+		tradeInteractionTask = Folia.getScheduler().runTask(
+				SKShopkeepersPlugin.getInstance(), uiSession.getPlayer(),
 				new ProcessTradeInteractionTask(uiSession)
 		);
 	}

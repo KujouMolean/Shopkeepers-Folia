@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.shopobjects.citizens;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -134,7 +135,7 @@ public class CitizensShopkeeperTrait extends Trait {
 
 		// Giving citizens some time to properly initialize the trait and NPC:
 		// Also: Shopkeeper creation by a player is handled after trait attachment.
-		Bukkit.getScheduler().runTaskLater(SKShopkeepersPlugin.getInstance(), () -> {
+		Folia.getScheduler().runTaskLater(SKShopkeepersPlugin.getInstance(), getNPC().getEntity(), () -> {
 			// Create a new shopkeeper if there isn't one already for this NPC (without creator):
 			this.createShopkeeperIfMissing(null);
 		}, 5L);
@@ -225,8 +226,8 @@ public class CitizensShopkeeperTrait extends Trait {
 
 			// Note: We don't trigger a save of the NPC data when the trait is manually added, so we
 			// also don't trigger a save when we remove the trait again here.
-			Bukkit.getScheduler().runTask(
-					plugin,
+			Folia.getScheduler().runTask(
+					plugin, npc.getEntity(),
 					() -> npc.removeTrait(CitizensShopkeeperTrait.class)
 			);
 		}

@@ -1,6 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'org.checkerframework'
 apply plugin: 'eclipse'
+apply plugin: 'io.papermc.paperweight.userdev'
 
 apply from: rootProject.file('modules/shared/specialSource.gradle')
 
@@ -13,14 +14,7 @@ ext {
 
 dependencies {
 	implementation project(':shopkeepers-main')
-	afterEvaluate {
-		if (remapServerCode) {
-			implementation "org.bukkit:craftbukkit:${craftbukkitVersion}:remapped-mojang"
-		} else {
-			implementation "org.bukkit:craftbukkit:${craftbukkitVersion}"
-		}
-	}
-
+	paperweight.foliaDevBundle("1.21.4-R0.1-SNAPSHOT")
 	testImplementation libs.junit
 	testImplementation libs.asm
 }

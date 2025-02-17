@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
@@ -936,7 +937,7 @@ public class TradingHandler extends AbstractShopkeeperUIHandler {
 
 		// Call trade completed event:
 		ShopkeeperTradeCompletedEvent tradeCompletedEvent = new ShopkeeperTradeCompletedEvent(tradeEvent);
-		Bukkit.getPluginManager().callEvent(tradeCompletedEvent);
+		Folia.getPluginManager().callEvent(tradeCompletedEvent);
 
 		// Play a sound effect if this is the first trade triggered by the inventory click:
 		boolean silent = (trade.getTradeNumber() > 1);

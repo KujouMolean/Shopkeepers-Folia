@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.ui.editor;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -43,7 +44,7 @@ public abstract class ShopkeeperActionButton extends ActionButton {
 
 		// Call shopkeeper edited event:
 		Player player = editorSession.getPlayer();
-		Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
+		Folia.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
 		// Save:
 		shopkeeper.save();

@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.moving;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -184,7 +185,7 @@ public class ShopkeeperMoving {
 		TextUtils.sendMessage(player, Messages.shopkeeperMoved);
 
 		// Call an event:
-		Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
+		Folia.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
 		// Save the shopkeeper:
 		shopkeeper.save();

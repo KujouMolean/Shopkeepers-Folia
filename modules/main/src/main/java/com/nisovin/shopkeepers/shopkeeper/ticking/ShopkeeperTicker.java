@@ -7,7 +7,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
+import com.molean.folia.adapter.Folia;
+import com.molean.folia.adapter.FoliaRunnable;
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.nisovin.shopkeepers.SKShopkeepersPlugin;
@@ -221,12 +225,12 @@ public class ShopkeeperTicker {
 		new ShopkeeperTickTask().start();
 	}
 
-	private final class ShopkeeperTickTask extends BukkitRunnable {
+	private final class ShopkeeperTickTask extends FoliaRunnable {
 
 		private static final int PERIOD = TICKING_PERIOD_TICKS / TICKING_GROUPS;
 
 		void start() {
-			this.runTaskTimer(plugin, PERIOD, PERIOD);
+			this.runTaskTimerAsynchronously(plugin, PERIOD, PERIOD);
 		}
 
 		@Override
@@ -240,7 +244,19 @@ public class ShopkeeperTicker {
 
 		currentlyTicking = true;
 		TickingGroup tickingGroup = this.getTickingGroup(activeTickingGroup.getValue());
-		tickingGroup.getShopkeepers().forEach(this::tickShopkeeper);
+		List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
+		tickingGroup.getShopkeepers().forEach(abstractShopkeeper -> {
+			SchedulerContext context = abstractShopkeeper.getLocation() != null ? SchedulerContext.of(abstractShopkeeper.getLocation()) : SchedulerContext.ofAsync();
+			CompletableFuture<Void> voidCompletableFuture = new CompletableFuture<>();
+			completableFutures.add(voidCompletableFuture);
+			context.runTask(plugin, () -> {
+				tickShopkeeper(abstractShopkeeper);
+				voidCompletableFuture.complete(null);
+			});
+		});
+
+		CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+
 		currentlyTicking = false;
 
 		// Process pending shopkeeper ticking registration changes:

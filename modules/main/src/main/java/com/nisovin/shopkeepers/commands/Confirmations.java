@@ -3,6 +3,8 @@ package com.nisovin.shopkeepers.commands;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ProxiedCommandSender;
@@ -19,14 +21,14 @@ public class Confirmations {
 	private static class PendingConfirmation {
 
 		private final Runnable action;
-		private final int taskId;
+		private final ScheduledTask taskId;
 
-		public PendingConfirmation(Runnable action, int taskId) {
+		public PendingConfirmation(Runnable action, ScheduledTask taskId) {
 			this.taskId = taskId;
 			this.action = action;
 		}
 
-		public int getTaskId() {
+		public ScheduledTask getTaskId() {
 			return taskId;
 		}
 
@@ -85,10 +87,10 @@ public class Confirmations {
 		Validate.notNull(action, "action is null");
 		Validate.isTrue(timeoutTicks > 0, "timeoutTicks has to be positive");
 
-		int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+		ScheduledTask taskId = Folia.getScheduler().runTaskLater(plugin, (Player) sender, () -> {
 			this.endConfirmation(sender);
 			TextUtils.sendMessage(sender, Messages.confirmationExpired);
-		}, timeoutTicks).getTaskId();
+		}, timeoutTicks);
 
 		PendingConfirmation previousPendingConfirmation = pendingConfirmations.put(
 				this.getSenderKey(sender),
@@ -96,7 +98,7 @@ public class Confirmations {
 		);
 		if (previousPendingConfirmation != null) {
 			// Cancel the previous pending confirmation task:
-			Bukkit.getScheduler().cancelTask(previousPendingConfirmation.getTaskId());
+			previousPendingConfirmation.getTaskId().cancel();
 		}
 	}
 
@@ -106,7 +108,7 @@ public class Confirmations {
 		PendingConfirmation pendingConfirmation = pendingConfirmations.remove(this.getSenderKey(sender));
 		if (pendingConfirmation != null) {
 			// End confirmation task:
-			Bukkit.getScheduler().cancelTask(pendingConfirmation.getTaskId());
+			pendingConfirmation.getTaskId().cancel();
 
 			// Return action:
 			return pendingConfirmation.getAction();

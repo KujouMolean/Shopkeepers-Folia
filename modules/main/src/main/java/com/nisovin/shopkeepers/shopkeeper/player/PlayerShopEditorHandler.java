@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.shopkeeper.player;
 
 import java.util.List;
 
+import com.molean.folia.adapter.SchedulerContext;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -98,7 +99,7 @@ public abstract class PlayerShopEditorHandler extends EditorHandler {
 					if (!player.isValid() || !shopkeeper.isValid()) return;
 
 					shopkeeper.openContainerWindow(player);
-				});
+				}, SchedulerContext.of(editorSession.getPlayer()));
 				return true;
 			}
 		};

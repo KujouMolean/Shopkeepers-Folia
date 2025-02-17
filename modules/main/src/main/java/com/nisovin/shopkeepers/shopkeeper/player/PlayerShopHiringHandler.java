@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.shopkeeper.player;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -131,7 +132,7 @@ public class PlayerShopHiringHandler extends HiringHandler {
 					newPlayerInventoryContents,
 					maxShopsLimit
 			);
-			Bukkit.getPluginManager().callEvent(hireEvent);
+			Folia.getPluginManager().callEvent(hireEvent);
 			if (hireEvent.isCancelled()) {
 				Log.debug("PlayerShopkeeperHireEvent was cancelled!");
 				// Close window for this player:

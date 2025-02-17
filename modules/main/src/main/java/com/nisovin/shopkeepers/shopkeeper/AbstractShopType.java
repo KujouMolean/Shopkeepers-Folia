@@ -2,6 +2,7 @@ package com.nisovin.shopkeepers.shopkeeper;
 
 import java.util.List;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -276,7 +277,7 @@ public abstract class AbstractShopType<T extends AbstractShopkeeper>
 	protected boolean handleSpecificShopkeeperCreation(ShopCreationData creationData) {
 		// Call event:
 		PlayerCreateShopkeeperEvent createEvent = new PlayerCreateShopkeeperEvent(creationData);
-		Bukkit.getPluginManager().callEvent(createEvent);
+		Folia.getPluginManager().callEvent(createEvent);
 		if (createEvent.isCancelled()) {
 			Log.debug("ShopkeeperCreateEvent was cancelled!");
 			return false;

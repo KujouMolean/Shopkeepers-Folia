@@ -17,6 +17,8 @@ repositories {
 	maven { url 'https://repo.glaremasters.me/repository/towny/' }
 	// Towny alternative (needs a different group id), VaultAPI
 	maven { url 'https://jitpack.io' }
+	// Paper-api
+	maven { url 'https://repo.papermc.io/repository/maven-public/' }
 }
 
 configurations {
@@ -38,23 +40,20 @@ dependencies {
 	// compileOnly: Omits these dependencies from the transitively inherited apiElements and
 	// runtimeElements. However, we need to manually add these dependencies to our test dependencies
 	// if needed.
-	compileOnly libs.spigot.api // Includes the Bukkit API
+	compileOnly libs.paper.api // Includes the Bukkit API
 	compileOnly libs.worldguard.bukkit
 	compileOnly libs.towny
 	(compileOnly libs.citizens.main) { transitive = false }
 	compileOnly libs.vault.api
 	compileOnly libs.bstats.bukkit
+	compileOnly "com.molean:FoliaAdapter:1.0-SNAPSHOT:dev"
 
 	shaded libs.bstats.bukkit
 
-	testImplementation libs.spigot.api
+	testImplementation libs.paper.api
 	testImplementation libs.junit
 	testImplementation libs.hamcrest
-	(testImplementation libs.craftbukkit) {
-		artifact {
-			classifier = 'remapped-mojang'
-		}
-	}
+	testImplementation libs.paper.api
 }
 
 // Note: There is no need to remap the test classes to run them.

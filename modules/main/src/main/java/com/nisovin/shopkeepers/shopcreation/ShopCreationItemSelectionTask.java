@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.molean.folia.adapter.Folia;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -81,7 +83,7 @@ class ShopCreationItemSelectionTask implements Runnable {
 
 	private final Plugin plugin;
 	private final Player player;
-	private @Nullable BukkitTask bukkitTask = null;
+	private @Nullable ScheduledTask bukkitTask = null;
 
 	// Use the static 'start' factory method.
 	private ShopCreationItemSelectionTask(Plugin plugin, Player player) {
@@ -93,7 +95,7 @@ class ShopCreationItemSelectionTask implements Runnable {
 	private void start() {
 		// Cancel previous task if already active:
 		this.cancel();
-		bukkitTask = Bukkit.getScheduler().runTaskLater(plugin, this, DELAY_TICKS);
+		bukkitTask = Folia.getScheduler().runTaskLater(plugin, player, this, DELAY_TICKS);
 	}
 
 	// Note: Performs no cleanup.

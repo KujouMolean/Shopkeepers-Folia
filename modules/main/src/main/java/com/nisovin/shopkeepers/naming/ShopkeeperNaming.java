@@ -1,5 +1,6 @@
 package com.nisovin.shopkeepers.naming;
 
+import com.molean.folia.adapter.Folia;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -106,7 +107,7 @@ public class ShopkeeperNaming {
 		shopkeeper.abortUISessionsDelayed(); // TODO Really needed?
 
 		// Call event:
-		Bukkit.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
+		Folia.getPluginManager().callEvent(new ShopkeeperEditedEvent(shopkeeper, player));
 
 		// Save:
 		shopkeeper.save();
