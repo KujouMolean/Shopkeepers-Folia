@@ -232,75 +232,79 @@ public class LivingEntityAI implements Listener {
 		Validate.notNull(shopObject, "shopObject is null");
 		Validate.isTrue(!shopObjects.containsKey(shopObject), "shopObject is already added");
 
-		// Note: We expect that the shop object is unregistered again when its entity is despawned.
-		LivingEntity entity = shopObject.getEntity();
-		Validate.notNull(entity, "shopObject is not spawned currently!");
-		assert entity != null;
-		Validate.isTrue(entity.isValid(), "entity is invalid");
+		synchronized (shopObject) {
+			// Note: We expect that the shop object is unregistered again when its entity is despawned.
+			LivingEntity entity = shopObject.getEntity();
+			Validate.notNull(entity, "shopObject is not spawned currently!");
+			assert entity != null;
+			Validate.isTrue(entity.isValid(), "entity is invalid");
 
-		// Determine entity chunk (asserts that the entity won't move!):
-		// We assert that the chunk is loaded (checked above by isValid call).
-		Location entityLocation = Unsafe.assertNonNull(entity.getLocation(sharedLocation));
-		sharedChunkCoords.set(entityLocation);
-		sharedLocation.setWorld(null); // Reset
+			// Determine entity chunk (asserts that the entity won't move!):
+			// We assert that the chunk is loaded (checked above by isValid call).
+			Location entityLocation = Unsafe.assertNonNull(entity.getLocation(sharedLocation));
+			sharedChunkCoords.set(entityLocation);
+			sharedLocation.setWorld(null); // Reset
 
-		// Add chunk entry:
-		ChunkData chunkData = chunks.get(sharedChunkCoords);
-		if (chunkData == null) {
-			ChunkCoords chunkCoords = new ChunkCoords(sharedChunkCoords); // Copy
-			chunkData = new ChunkData(chunkCoords, customGravityEnabled);
-			chunks.put(chunkCoords, chunkData);
+			// Add chunk entry:
+			ChunkData chunkData = chunks.get(sharedChunkCoords);
+			if (chunkData == null) {
+				ChunkCoords chunkCoords = new ChunkCoords(sharedChunkCoords); // Copy
+				chunkData = new ChunkData(chunkCoords, customGravityEnabled);
+				chunks.put(chunkCoords, chunkData);
 
-			// Update chunk statistics:
+				// Update chunk statistics:
+				if (chunkData.activeAI) {
+					activeAIChunksCount++;
+				}
+				if (chunkData.activeGravity) {
+					activeGravityChunksCount++;
+				}
+			}
+
+			// Add entity entry:
+			EntityData entityData = new EntityData(shopObject, chunkData);
+			shopObjects.put(shopObject, entityData);
+			chunkData.entities.add(entityData);
+
+			// Update entity statistics:
 			if (chunkData.activeAI) {
-				activeAIChunksCount++;
+				activeAIEntityCount++;
 			}
 			if (chunkData.activeGravity) {
-				activeGravityChunksCount++;
+				activeGravityEntityCount++;
 			}
+			// Start the AI task, if it isn't already running:
+			this.startTask();
 		}
-
-		// Add entity entry:
-		EntityData entityData = new EntityData(shopObject, chunkData);
-		shopObjects.put(shopObject, entityData);
-		chunkData.entities.add(entityData);
-
-		// Update entity statistics:
-		if (chunkData.activeAI) {
-			activeAIEntityCount++;
-		}
-		if (chunkData.activeGravity) {
-			activeGravityEntityCount++;
-		}
-		// Start the AI task, if it isn't already running:
-		this.startTask();
 	}
 
 	public void removeShopObject(SKLivingShopObject<?> shopObject) {
-		// Remove shop object:
-		@Nullable EntityData entityData = shopObjects.remove(shopObject);
-		if (entityData == null) return; // Shop object was not added
+		synchronized (shopObject) {
+			// Remove shop object:
+			@Nullable EntityData entityData = shopObjects.remove(shopObject);
+			if (entityData == null) return; // Shop object was not added
 
-		ChunkData chunkData = entityData.chunkData;
-		chunkData.entities.remove(entityData);
-		if (chunkData.entities.isEmpty()) {
-			chunks.remove(chunkData.chunkCoords);
+			ChunkData chunkData = entityData.chunkData;
+			chunkData.entities.remove(entityData);
+			if (chunkData.entities.isEmpty()) {
+				chunks.remove(chunkData.chunkCoords);
 
-			// Update chunk statistics:
+				// Update chunk statistics:
+				if (chunkData.activeAI) {
+					activeAIChunksCount--;
+				}
+				if (chunkData.activeGravity) {
+					activeGravityChunksCount--;
+				}
+			}
+
+			// Update entity statistics:
 			if (chunkData.activeAI) {
-				activeAIChunksCount--;
+				activeAIEntityCount--;
 			}
 			if (chunkData.activeGravity) {
-				activeGravityChunksCount--;
+				activeGravityEntityCount--;
 			}
-		}
-
-		// Update entity statistics:
-		if (chunkData.activeAI) {
-			activeAIEntityCount--;
-		}
-		if (chunkData.activeGravity) {
-			activeGravityEntityCount--;
 		}
 	}
 
@@ -587,41 +591,43 @@ public class LivingEntityAI implements Listener {
 		assert entityData != null;
 		LivingEntity entity = entityData.shopObject.getEntity();
 
-		// Unexpected: The shop object is supposed to unregister itself from the AI system when it
-		// despawns its entity.
-		if (entity == null) return;
+		synchronized (entityData.shopObject) {
+			// Unexpected: The shop object is supposed to unregister itself from the AI system when it
+			// despawns its entity.
+			if (entity == null) return;
 
-		// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
-		// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
-		// its chunk being unloaded. So there should be no need to check for that here.
-		// TODO Actually, if the entity moved into a different chunk and we did not update its
-		// location in the chunk index yet, it may already have been unloaded but still getting
-		// ticked here. However, this is not the case currently, since all shopkeeper entities are
-		// stationary (unless some other plugin teleports them).
-		if (entity.isDead()) {
-			// Some plugin might have removed the entity. The shop object will remove the entity's
-			// entry once it recognizes that the entity has been removed. Until then, we simply skip
-			// it here.
-			return;
+			// Note: Checking entity.isValid() is relatively heavy (compared to other operations) due to
+			// a chunk lookup. The entity's entry is already immediately getting removed as reaction to
+			// its chunk being unloaded. So there should be no need to check for that here.
+			// TODO Actually, if the entity moved into a different chunk and we did not update its
+			// location in the chunk index yet, it may already have been unloaded but still getting
+			// ticked here. However, this is not the case currently, since all shopkeeper entities are
+			// stationary (unless some other plugin teleports them).
+			if (entity.isDead()) {
+				// Some plugin might have removed the entity. The shop object will remove the entity's
+				// entry once it recognizes that the entity has been removed. Until then, we simply skip
+				// it here.
+				return;
+			}
+
+			ChunkData chunkData = entityData.chunkData;
+
+			// Process gravity:
+			gravityTimings.resume();
+			if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
+				activeGravityEntityCount++;
+				this.processGravity(entityData);
+			}
+			gravityTimings.pause();
+
+			// Process AI:
+			aiTimings.resume();
+			if (chunkData.activeAI) {
+				activeAIEntityCount++;
+				this.processAI(entityData);
+			}
+			aiTimings.pause();
 		}
-
-		ChunkData chunkData = entityData.chunkData;
-
-		// Process gravity:
-		gravityTimings.resume();
-		if (chunkData.activeGravity && entityData.isAffectedByGravity()) {
-			activeGravityEntityCount++;
-			this.processGravity(entityData);
-		}
-		gravityTimings.pause();
-
-		// Process AI:
-		aiTimings.resume();
-		if (chunkData.activeAI) {
-			activeAIEntityCount++;
-			this.processAI(entityData);
-		}
-		aiTimings.pause();
 	}
 
 	// GRAVITY
