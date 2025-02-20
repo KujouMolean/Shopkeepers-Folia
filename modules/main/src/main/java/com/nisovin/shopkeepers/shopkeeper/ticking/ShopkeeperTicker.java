@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.molean.folia.adapter.Folia;
 import com.molean.folia.adapter.FoliaRunnable;
@@ -96,7 +97,7 @@ public class ShopkeeperTicker {
 	// and only the actual registration change is deferred, because if a shopkeeper changes its
 	// ticking state multiple times during the same tick we would otherwise lose the callbacks for
 	// the intermediate ticking state changes.
-	private final Map<AbstractShopkeeper, Boolean> pendingTickingChanges = new LinkedHashMap<>();
+	private final Map<AbstractShopkeeper, Boolean> pendingTickingChanges = new ConcurrentHashMap<>();
 
 	public ShopkeeperTicker(SKShopkeepersPlugin plugin) {
 		Validate.notNull(plugin, "plugin is null");
