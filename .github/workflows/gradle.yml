@@ -1,0 +1,58 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "folia" ]
+  pull_request:
+    branches: [ "folia" ]
+
+jobs:
+  build:
+    name: build jar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+
+      - name: checkout KujouMolean/FoliaAdapter
+        uses: actions/checkout@v4
+        with:
+          repository: 'KujouMolean/FoliaAdapter'
+          path: 'workspace/FoliaAdapter'
+
+      - name: run publishToMavenLocal at FoliaAdapter
+        run: cd workspace/FoliaAdapter && sudo chmod +x ./gradlew && ./gradlew publishToMavenLocal
+
+      - name: Upload FoliaAdapter artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FoliaAdapter
+          path: workspace/FoliaAdapter/build/libs/FoliaAdapter*.jar
+
+      - name: checkout current repo
+        uses: actions/checkout@v4
+        with:
+          path: 'workspace/Shopkeepers'
+
+      - name: build Shopkeepers
+        run: cd workspace/Shopkeepers && sudo chmod +x ./gradlew && ./gradlew build
+
+      - name: Upload Shopkeepers artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shopkeepers
+          path: workspace/Shopkeepers/build/libs/Shopkeepers-*.jar
